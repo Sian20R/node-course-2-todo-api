@@ -4,8 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server/server.js",
     "test": "jest",
     "test-watch": "nodemon --exec \"jest\""
+  },
+  "engines": {
+    "node": "11.8.0"
   },
   "author": "Seaw Ker Boon",
   "license": "ISC",
