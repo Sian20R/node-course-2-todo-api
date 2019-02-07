@@ -114,6 +114,66 @@ describe('GET /Todos', () => {
 });
 
 
+describe('PATCH /todos/:id', () => {
+    test('should update the todo', (done) => {
+        var hexId = dummyTodos[1]._id.toHexString();
+        var text = 'This should be a new text';
+
+        request(app)
+            .patch(`/todos/${hexId}`)
+            .send({
+                completed: true,
+                text
+            })
+            .expect((res) => {
+                expect(res.body.todo._id).toEqual(hexId);
+            })
+            .end((err, res) => {
+                if (err) 
+                    return done(err);
+
+                // query database using findById
+                Todo.findById(hexId)
+                    .then((todo) => {
+                        expect(todo.text).toEqual(text);
+                        expect(todo.completed).toBe(true);
+                        expect(typeof todo.completedAt).toBe("number");
+                        done();
+                    }).catch(err => {
+                        return done(err);
+                    })
+            });          
+
+    });
+
+    test('should clear completedAt when todo is not completed', (done) => {
+        var hexId = dummyTodos[1]._id.toHexString();
+
+        request(app)
+            .patch(`/todos/${hexId}`)
+            .send({
+                completed: 'abc',
+            })
+            .expect((res) => {
+                expect(res.body.todo._id).toEqual(hexId);
+            })
+            .end((err, res) => {
+                if (err) 
+                    return done(err);
+
+                // query database using findById
+                Todo.findById(hexId)
+                    .then((todo) => {
+                        expect(todo.completed).toBe(false);
+                        expect(todo.completedAt).toBeFalsy();
+                        done();
+                    }).catch(err => {
+                        return done(err);
+                    })
+            });
+    });
+});
+
 describe('DELETE /todos/:id', () => {
     test('it shoud remove a todo', (done) => {
         var hexId = dummyTodos[1]._id.toHexString();
@@ -155,3 +215,5 @@ describe('DELETE /todos/:id', () => {
             .end(done);
     });
 });
+
+
