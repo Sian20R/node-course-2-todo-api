@@ -118,11 +118,22 @@ app.post('/user', (req, res) => {
     });
 });
 
-
 app.get('/user/me', authenticate, (req, res) => {
    res.send(req.user);
 });
 
+app.post('/user/login', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+
+    // Authenticate the user login and set the token on x-auth to validate the user is validl
+    User.findByCredentials(body.email, body.password).then((user) => {
+        return user.generateAuthToken().then((token) => {
+            res.header('x-auth', token).send(user);
+        });
+    }).catch((e) => {
+        res.status(400).send();
+    });
+});
 
 
 app.listen(port, () => {
