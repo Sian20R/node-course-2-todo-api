@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
+var {authenticate} = require('./middleware/authenticate');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
 
@@ -15,6 +16,8 @@ const port = process.env.PORT;
 // Middleware
 app.use(bodyParser.json());
 
+
+// /todos
 app.post('/todos', (req, res) => {
     // Creating the new model with values from user
     var todo = new Todo({
@@ -100,6 +103,7 @@ app.patch('/todos/:id', (req, res) => {
 });
 
 
+// /user
 app.post('/user', (req, res) => {
     var body = _.pick(req.body, ['email', 'password']);
     var user = new User(body);
@@ -114,6 +118,10 @@ app.post('/user', (req, res) => {
     });
 });
 
+
+app.get('/user/me', authenticate, (req, res) => {
+   res.send(req.user);
+});
 
 
 

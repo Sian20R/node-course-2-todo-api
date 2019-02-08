@@ -11,7 +11,7 @@ console.log(token);
 
 
 // Does the opposite. It takes the token and the secret, make sure that data is not manipulated.
-var decoded = jwt.verify(token, '123abc');
+var decoded = jwt.verify(token, '123abc'); // 1st para: token, 2nd para: secretOrPrivateKey
 console.log('decoded', decoed);
 
 // var message = 'I am user number 3';
