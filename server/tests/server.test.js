@@ -225,7 +225,6 @@ describe('GET /user/me', () => {
     });
 });
 
-
 describe('POST /user', () => {
     test('should create a user', (done) => {
         var email = 'example@example.com';
@@ -274,4 +273,53 @@ describe('POST /user', () => {
           .expect(400)
           .end(done);
     });
+});
+
+describe('POST /user/login', () => {
+    test('should login user and return auth token', (done) => {
+      request(app)
+        .post('/user/login')
+        .send({
+          email: dummyUsers[1].email,
+          password: dummyUsers[1].password
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.headers['x-auth']).toBeTruthy();
+        })
+        .end((err, res) => {
+          if (err) 
+            return done(err);
+
+          User.findById(dummyUsers[1]._id).then((user) => {
+            expect(user.toObject().tokens[1]).toMatchObject({
+              access: 'auth',
+              token: res.headers['x-auth']
+            });
+            done();
+          }).catch((e) => done(e));
+        });
+    })
+
+    test('should reject invalid login', (done) => {
+        request(app)
+          .post('/user/login')
+          .send({
+            email: dummyUsers[1].email,
+            password: 'abc123456e'
+          })
+          .expect(400)
+          .expect((res) => {
+            expect(res.headers['x-auth']).toBeFalsy();
+          })
+          .end((err, res) => {
+            if (err) 
+              return done(err);
+  
+            User.findById(dummyUsers[1]._id).then((user) => {
+                expect(user.tokens.length).toBe(1);
+                done();
+            }).catch((e) => done(e));
+          });
+      })
 });

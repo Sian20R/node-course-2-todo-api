@@ -49,7 +49,17 @@ UserSchema.methods.generateAuthToken =  function () {   // Why not use arrow fun
     return user.save().then(() => {
         return token;
     });
-}
+};
+
+UserSchema.methods.removeToken = function (token) {
+    var user = this;
+
+    return user.update({
+        $pull: {            // Let you remove item from array if match certain criteria
+            tokens: {token}
+        }
+    });
+};
 
 
 UserSchema.statics.findByToken = function (token) {
@@ -68,27 +78,27 @@ UserSchema.statics.findByToken = function (token) {
         'tokens.token': token,
         'tokens.access': 'auth'
     });
-  };
+};
 
+UserSchema.statics.findByCredentials = function (email, password) {
+var User = this;
 
-  UserSchema.statics.findByCredentials = function (email, password) {
-    var User = this;
-
-    // find whether the credential is valid and return the user
-    return User.findOne({email}).then((user) => {
-        if (!user)
-            return Promise.reject();
-        
-        return new Promise((resolve, reject) => {
-            bcrypt.compare(password, user.password, (err, res) => {
-                if (res)
-                    return resolve(user);
-                else
-                    return reject();
-            });
+// find whether the credential is valid and return the user
+return User.findOne({email}).then((user) => {
+    if (!user)
+        return Promise.reject();
+    
+    return new Promise((resolve, reject) => {
+        bcrypt.compare(password, user.password, (err, res) => {
+            if (res)
+                return resolve(user);
+            else
+                return reject();
         });
     });
-  };
+});
+};
+
 
 UserSchema.pre('save', function(next) {
     var user = this;
