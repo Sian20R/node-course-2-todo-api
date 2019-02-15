@@ -278,6 +278,7 @@ describe('GET /user/me', () => {
     test('should return 401 if user is not authenticated', (done) => {
         request(app)
             .get('/user/me')
+            .set('x-auth', 'fdwwf3r34r43f43f34')
             .expect(401)
             .expect((res) => {
                 expect(res.body).toEqual({});
