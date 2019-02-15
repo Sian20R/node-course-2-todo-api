@@ -24,17 +24,20 @@ describe('POST /todo', () => {
             .expect((res) => {
                 expect(res.body.text).toBe(text);
             })
-        .end((err, res) => {
+        .end(async (err, res) => {
             // Handle error if the status code is not 200 or not the body text expected
             if (err)
                 return done(err);
             
             // Check if the todo doc is added into db
-            Todo.find({text}).then((todos) => {
+            try {
+                let todos = await Todo.find({text});
                 expect(todos.length).toBe(1);
                 expect(todos[0].text).toBe(text);
                 done();
-            }).catch((e) => done(e));
+            } catch (e) {
+                done(e)
+            }
         })
     });
 
@@ -47,16 +50,16 @@ describe('POST /todo', () => {
             .set('x-auth', dummyUsers[0].tokens[0].token)
             .send({text})
             .expect(400)
-        .end((err, res) => {
+        .end(async (err, res) => {
             // Handle error if the status code is not 400
-            if (err)
-                return done(err);
-            
-            // Check if the todo doc is added into db
-            Todo.find().then((todos) => {
+            try {
+                // Check if the todo doc is added into db
+                let todos = await Todo.find();
                 expect(todos.length).toBe(3);
                 done();
-            }).catch((e) => done(e));
+            } catch (e) {
+                done(e)
+            }
         })
     });
 });
@@ -129,20 +132,20 @@ describe('PATCH /todos/:id', () => {
             .expect((res) => {
                 expect(res.body.todo._id).toEqual(hexId);
             })
-            .end((err, res) => {
-                if (err) 
-                    return done(err);
-
-                // query database using findById
-                Todo.findById(hexId)
-                    .then((todo) => {
-                        expect(todo.text).toEqual(text);
-                        expect(todo.completed).toBe(true);
-                        expect(typeof todo.completedAt).toBe("number");
-                        done();
-                    }).catch(err => {
-                        return done(err);
-                    })
+            .end(async (err, res) => {
+                try {
+                    if (err) 
+                        return done(err); 
+                    
+                    // query database using findById
+                    let todo = await Todo.findById(hexId);
+                    expect(todo.text).toEqual(text);
+                    expect(todo.completed).toBe(true);
+                    expect(typeof todo.completedAt).toBe("number");
+                    done();
+                } catch (e) {
+                    return done(e);
+                }
             });          
 
     });
@@ -176,19 +179,18 @@ describe('PATCH /todos/:id', () => {
             .expect((res) => {
                 expect(res.body.todo._id).toEqual(hexId);
             })
-            .end((err, res) => {
+            .end(async (err, res) => {
+                try {
+                    // query database using findById
+                    let todo = await Todo.findById(hexId);
+                    expect(todo.completed).toBe(false);
+                    expect(todo.completedAt).toBeFalsy();
+                    done();
+                } catch (e) {
+                    return done(e);
+                }
                 if (err) 
                     return done(err);
-
-                // query database using findById
-                Todo.findById(hexId)
-                    .then((todo) => {
-                        expect(todo.completed).toBe(false);
-                        expect(todo.completedAt).toBeFalsy();
-                        done();
-                    }).catch(err => {
-                        return done(err);
-                    })
             });
     });
 });
@@ -204,18 +206,20 @@ describe('DELETE /todos/:id', () => {
             .expect((res) => {
                 expect(res.body.todo._id).toBe(hexId);
             })
-            .end((err, res) => {
+            .end(async (err, res) => {
+                try {
+                    if (err) 
+                        return done(err);
+
+                    // query database using findById
+                    let todo = await Todo.findById(hexId);
+                    expect(todo).toBeFalsy();
+                    done();
+                } catch (e) {
+                    return done(e);
+                }
                 if (err) 
                     return done(err);
-
-                // query database using findById
-                Todo.findById(hexId)
-                    .then((todo) => {
-                        expect(todo).toBeFalsy();
-                        done();
-                    }).catch(err => {
-                        return done(err);
-                    })
             });
     });
 
@@ -226,18 +230,18 @@ describe('DELETE /todos/:id', () => {
             .delete(`/todos/${hexId}`)
             .set('x-auth', dummyUsers[1].tokens[0].token)
             .expect(404)
-            .end((err, res) => {
-                if (err) 
-                    return done(err);
-
-                // query database using findById
-                Todo.findById(hexId)
-                    .then((todo) => {
-                        expect(todo).toBeTruthy();
-                        done();
-                    }).catch(err => {
+            .end(async (err, res) => {
+                try {
+                    if (err) 
                         return done(err);
-                    })
+
+                    // query database using findById
+                    let todo = await Todo.findById(hexId);
+                    expect(todo).toBeTruthy();
+                    done();
+                } catch (e) {
+                    return done(e);
+                }
             });
     });
 
@@ -301,16 +305,17 @@ describe('POST /user', () => {
             expect(res.body._id).toBeTruthy();
             expect(res.body.email).toBe(email);
           })
-          .end((err) => {
-            if (err) {
-              return done(err);
+          .end(async (err) => {
+            try {
+                if (err) 
+                    return done(err);
+                let user =  await User.findOne({email});
+                expect(user).toBeTruthy();
+                expect(user.password).not.toBe(password);
+                done();
+            } catch (e) {
+                return done(e);            
             }
-    
-            User.findOne({email}).then((user) => {
-              expect(user).toBeTruthy();
-              expect(user.password).not.toBe(password);
-              done();
-            }).catch((e) => done(e));
           });
       });
 
@@ -349,17 +354,20 @@ describe('POST /user/login', () => {
         .expect((res) => {
           expect(res.headers['x-auth']).toBeTruthy();
         })
-        .end((err, res) => {
-          if (err) 
-            return done(err);
+        .end(async (err, res) => {
+          try {
+            if (err) 
+                return done(err);
 
-          User.findById(dummyUsers[1]._id).then((user) => {
+            let user = await User.findById(dummyUsers[1]._id);
             expect(user.toObject().tokens[1]).toMatchObject({
-              access: 'auth',
-              token: res.headers['x-auth']
-            });
-            done();
-          }).catch((e) => done(e));
+                access: 'auth',
+                token: res.headers['x-auth']
+              });
+              done();
+          } catch(e) {
+            done(e);
+          }
         });
     })
 
@@ -374,14 +382,14 @@ describe('POST /user/login', () => {
           .expect((res) => {
             expect(res.headers['x-auth']).toBeFalsy();
           })
-          .end((err, res) => {
-            if (err) 
-              return done(err);
-  
-            User.findById(dummyUsers[1]._id).then((user) => {
+          .end(async (err, res) => {
+            try {
+                let user = await User.findById(dummyUsers[1]._id);
                 expect(user.tokens.length).toBe(1);
                 done();
-            }).catch((e) => done(e));
+            } catch (e) {
+                done(e);
+            }
           });
       })
 });
@@ -392,14 +400,17 @@ describe('DELETE /user/me/token', () => {
             .delete('/user/me/token')
             .set('x-auth', dummyUsers[0].tokens[0].token)
             .expect(200)
-            .end((err, res) => {
-                if (err)
-                    return done(err);
+            .end(async (err, res) => {
+                try {
+                    if (err)
+                        return done(err);
 
-                User.findById(dummyUsers[0]._id).then((user) => {
+                    let user = await User.findById(dummyUsers[0]._id);
                     expect(user.tokens.length).toBe(0);
                     done();
-                }).catch((e) => done(e));
+                } catch (e) {
+                    done(e);
+                }
             });
     });
 });
