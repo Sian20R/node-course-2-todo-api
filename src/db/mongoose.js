@@ -1,14 +1,10 @@
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-// Tell mongoose which Promise library to use
-mongoose.Promise = global.Promise;
 // Connect to DB with mongoose
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false
 });
 
-module.exports = {
-    mongoose
-};
+module.exports = mongoose;
